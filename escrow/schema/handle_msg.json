@@ -11,12 +11,21 @@
         "create_order": {
           "type": "object",
           "required": [
+            "data",
             "denom",
+            "name",
             "nft_id",
-            "price"
+            "price",
+            "url"
           ],
           "properties": {
+            "data": {
+              "type": "string"
+            },
             "denom": {
+              "type": "string"
+            },
+            "name": {
               "type": "string"
             },
             "nft_id": {
@@ -24,6 +33,9 @@
             },
             "price": {
               "$ref": "#/definitions/Coin"
+            },
+            "url": {
+              "type": "string"
             }
           }
         }

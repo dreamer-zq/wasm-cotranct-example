@@ -10,7 +10,10 @@ pub enum ContractError {
     Unauthorized {},
 
     #[error("({order_id}) Order not found")]
-    OrderNotExist {order_id: String},
+    OrderNotExist { order_id: String },
+
+    #[error("({order_id}) Order state invalid")]
+    InvalidOrderState { order_id: String },
     // Add any other custom errors you like here.
     // Look at https://docs.rs/thiserror/1.0.21/thiserror/ for details.
 }

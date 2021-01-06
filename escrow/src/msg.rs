@@ -16,6 +16,9 @@ pub enum HandleMsg {
         denom: String,
         nft_id: String,
         price: Coin,
+        name: String,
+        url: String,
+        data: String,
     },
     PayOrder {
         order_id: String,
@@ -33,6 +36,17 @@ pub enum QueryMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct OrderListResponse {
     pub list: Vec<Order>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct MsgMintNFT {
+    pub id: String,
+    pub denom_id: String,
+    pub name: String,
+    pub url: String,
+    pub data: String,
+    pub sender: HumanAddr,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

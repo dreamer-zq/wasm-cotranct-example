@@ -1,10 +1,15 @@
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 use cosmwasm_std::Coin;
 use cosmwasm_std::{HumanAddr, Storage};
 use cosmwasm_storage::{singleton, singleton_read, ReadonlySingleton, Singleton};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 pub static CONFIG_KEY: &[u8] = b"config";
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub enum OrderState {
+    PENDING,
+    PAID,
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct State {
@@ -17,6 +22,7 @@ pub struct Order {
     pub nft_id: String,
     pub price: Coin,
     pub seller: HumanAddr,
+    pub state: OrderState,
 }
 
 pub fn config<S: Storage>(storage: &mut S) -> Singleton<S, State> {

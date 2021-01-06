@@ -1,14 +1,14 @@
 use cosmwasm_std::{
-    to_binary, Api, BankMsg, Binary, CosmosMsg, Env, Extern, HandleResponse, InitResponse,
-    MessageInfo, Querier, StdResult, Storage,
+    to_binary, Api, BankMsg, Binary, CosmosMsg, Env, Extern, HandleResponse, HumanAddr,
+    InitResponse, MessageInfo, Querier, StdResult, Storage,
 };
 
 use crate::error::ContractError;
 use crate::msg::{
-    create_wasm_custom_msg, HandleMsg, InitMsg, MsgTransferNFT, MsgWrapper, OrderListResponse,
-    QueryMsg,
+    create_wasm_custom_msg, HandleMsg, InitMsg, MsgMintNFT, MsgTransferNFT, MsgWrapper,
+    OrderListResponse, QueryMsg,
 };
-use crate::state::{config, config_read, Order, State};
+use crate::state::{config, config_read, Order, OrderState, State};
 use cosmwasm_std::Coin;
 
 // Note, you can use StdResult in some functions where you do not
@@ -28,7 +28,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
 // And declare a custom Error variant for the ones where you will want to make use of it
 pub fn handle<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     msg: HandleMsg,
 ) -> Result<HandleResponse<MsgWrapper>, ContractError> {
@@ -36,32 +36,60 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
         HandleMsg::CreateOrder {
             denom,
             nft_id,
+            name,
+            url,
+            data,
             price,
-        } => create_order(deps, info, denom, nft_id, price),
-        HandleMsg::PayOrder { order_id } => pay_order(deps, _env, info, order_id),
+        } => place_order(deps, env, info, denom, nft_id, name, url, data, price),
+        HandleMsg::PayOrder { order_id } => pay_order(deps, env, info, order_id),
     }
 }
 
-pub fn create_order<S: Storage, A: Api, Q: Querier>(
+pub fn place_order<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
+    env: Env,
     info: MessageInfo,
     denom: String,
     nft_id: String,
+    name: String,
+    url: String,
+    data: String,
     price: Coin,
 ) -> Result<HandleResponse<MsgWrapper>, ContractError> {
+    let mut msgs: Vec<CosmosMsg<MsgWrapper>> = Vec::new();
+
     config(&mut deps.storage).update(|mut state| -> Result<_, ContractError> {
-        //let order_id = time::precise_time_ns().to_string();
-        state.orders.push(Order {
-            id: "1234567890".to_string(),
-            denom,
-            nft_id,
+        state.orders.push(create_order(
+            denom.clone(),
+            nft_id.clone(),
             price,
-            seller: info.sender,
-        });
+            info.sender,
+        ));
+
+        let msg = MsgMintNFT {
+            id: nft_id,
+            denom_id: denom,
+            name,
+            url,
+            data,
+            sender: env.contract.address,
+        };
+
+        let cus = create_wasm_custom_msg(
+            String::from("/irismod.nft.MsgMintNFT"),
+            to_binary(&msg).unwrap(),
+        );
+        msgs.push(cus);
+
         Ok(state)
     })?;
 
-    Ok(HandleResponse::default())
+    let r = HandleResponse {
+        messages: msgs,
+        data: None,
+        attributes: vec![],
+    };
+    Ok(r)
 }
 
 pub fn pay_order<S: Storage, A: Api, Q: Querier>(
@@ -74,6 +102,13 @@ pub fn pay_order<S: Storage, A: Api, Q: Querier>(
     config(&mut deps.storage).update(|mut state| -> Result<_, ContractError> {
         for order in &mut state.orders {
             if order.id == order_id {
+                if order.state != OrderState::PENDING {
+                    return Err(ContractError::InvalidOrderState {
+                        order_id: order.id.clone(),
+                    });
+                }
+                order.state = OrderState::PAID;
+
                 msgs.push(CosmosMsg::Bank(BankMsg::Send {
                     from_address: env.contract.address.clone(),
                     to_address: order.seller.clone(),
@@ -124,6 +159,18 @@ fn query_order_list<S: Storage, A: Api, Q: Querier>(
     Ok(OrderListResponse { list: state.orders })
 }
 
+fn create_order(denom: String, nft_id: String, price: Coin, seller: HumanAddr) -> Order {
+    let order_id = time::precise_time_ns().to_string();
+    return Order {
+        id: order_id,
+        denom,
+        nft_id,
+        price,
+        seller,
+        state: OrderState::PENDING,
+    };
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -154,6 +201,9 @@ mod tests {
         let msg = HandleMsg::CreateOrder {
             denom: "cert".to_string(),
             nft_id: "id1".to_string(),
+            name: "test".to_string(),
+            url: "test".to_string(),
+            data: "test".to_string(),
             price: Coin::new(100u128, "iris"),
         };
         let _res = handle(&mut deps, mock_env(), info, msg).unwrap();
