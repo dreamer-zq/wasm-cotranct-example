@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "OrderListResponse",
+  "type": "object",
+  "required": [
+    "list"
+  ],
+  "properties": {
+    "list": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Order"
+      }
+    }
+  },
+  "definitions": {
+    "Coin": {
+      "type": "object",
+      "required": [
+        "amount",
+        "denom"
+      ],
+      "properties": {
+        "amount": {
+          "$ref": "#/definitions/Uint128"
+        },
+        "denom": {
+          "type": "string"
+        }
+      }
+    },
+    "HumanAddr": {
+      "type": "string"
+    },
+    "Order": {
+      "type": "object",
+      "required": [
+        "denom",
+        "id",
+        "nft_id",
+        "price",
+        "seller"
+      ],
+      "properties": {
+        "denom": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "nft_id": {
+          "type": "string"
+        },
+        "price": {
+          "$ref": "#/definitions/Coin"
+        },
+        "seller": {
+          "$ref": "#/definitions/HumanAddr"
+        }
+      }
+    },
+    "Uint128": {
+      "type": "string"
+    }
+  }
+}
