@@ -35,20 +35,25 @@
     "Order": {
       "type": "object",
       "required": [
+        "buyer",
         "denom",
-        "id",
         "nft_id",
+        "no",
         "price",
-        "seller"
+        "seller",
+        "state"
       ],
       "properties": {
+        "buyer": {
+          "$ref": "#/definitions/HumanAddr"
+        },
         "denom": {
           "type": "string"
         },
-        "id": {
+        "nft_id": {
           "type": "string"
         },
-        "nft_id": {
+        "no": {
           "type": "string"
         },
         "price": {
@@ -56,8 +61,18 @@
         },
         "seller": {
           "$ref": "#/definitions/HumanAddr"
+        },
+        "state": {
+          "$ref": "#/definitions/OrderState"
         }
       }
+    },
+    "OrderState": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "PAID"
+      ]
     },
     "Uint128": {
       "type": "string"

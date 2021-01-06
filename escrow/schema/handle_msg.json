@@ -16,7 +16,7 @@
             "name",
             "nft_id",
             "price",
-            "url"
+            "uri"
           ],
           "properties": {
             "data": {
@@ -34,7 +34,7 @@
             "price": {
               "$ref": "#/definitions/Coin"
             },
-            "url": {
+            "uri": {
               "type": "string"
             }
           }
@@ -50,10 +50,10 @@
         "pay_order": {
           "type": "object",
           "required": [
-            "order_id"
+            "order_no"
           ],
           "properties": {
-            "order_id": {
+            "order_no": {
               "type": "string"
             }
           }

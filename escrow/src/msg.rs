@@ -17,11 +17,11 @@ pub enum HandleMsg {
         nft_id: String,
         price: Coin,
         name: String,
-        url: String,
+        uri: String,
         data: String,
     },
     PayOrder {
-        order_id: String,
+        order_no: String,
     },
 }
 
@@ -44,9 +44,10 @@ pub struct MsgMintNFT {
     pub id: String,
     pub denom_id: String,
     pub name: String,
-    pub url: String,
+    pub uri: String,
     pub data: String,
     pub sender: HumanAddr,
+    pub recipient: HumanAddr,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

@@ -14,14 +14,16 @@ pub enum OrderState {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct State {
     pub orders: Vec<Order>,
+    pub sequence: u64,
 }
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Order {
-    pub id: String,
+    pub no: String,
     pub denom: String,
     pub nft_id: String,
     pub price: Coin,
     pub seller: HumanAddr,
+    pub buyer: HumanAddr,
     pub state: OrderState,
 }
 

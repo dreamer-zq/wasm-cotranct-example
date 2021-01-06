@@ -95,3 +95,23 @@ that have been published.
 Please replace this README file with information about your specific project. You can keep
 the `Developing.md` and `Publishing.md` files as useful referenced, but please set some
 proper description in the README.
+
+## Test Command
+
+```bash
+iris tx nft issue hostname --from node0 --gas-prices="0.025stake" --gas="auto" --gas-adjustment="3" -y --home ./testnet/node0/iriscli/ --keyring-backend file --chain-id test
+
+iris tx wasm store escrow.wasm --from node0 --gas-prices="0.025stake" --gas="auto" --gas-adjustment="1.2" -y --home ./testnet/node0/iriscli/ --keyring-backend file --chain-id test
+
+iris tx wasm instantiate 1 '{}' --label "test" --from node0 --gas-prices="0.025stake" --gas="auto" --gas-adjustment="1.5" -y --home ./testnet/node0/iriscli/ --keyring-backend file --chain-id test
+
+create_order='{"create_order":{"data":"road 89","url":"https://www.baidu.com/","name":"network","denom":"hostname","nft_id":"mengzhiyue2","price":{"denom":"stake","amount":"10"}}}'
+iris tx wasm execute iaa18vd8fpwxzck93qlwghaj6arh4p7c5n89fqcgm9 "${create_order}" --from node0 --gas-prices="0.025stake" --gas="auto" --gas-adjustment="3" -y --home ./testnet/node0/iriscli/ --keyring-backend file --chain-id test
+iris query wasm contract-state smart iaa18vd8fpwxzck93qlwghaj6arh4p7c5n89fqcgm9 '{"get_order_list":{}}'
+
+
+pay_order='{"pay_order":{"order_no":"1"}}'
+iris tx wasm execute iaa18vd8fpwxzck93qlwghaj6arh4p7c5n89fqcgm9 "${pay_order}" --from test1 --amount="10stake" --gas-prices="0.025stake" --gas="auto" --gas-adjustment="3" -y --home ./testnet/node0/iriscli/ --keyring-backend file --chain-id test
+
+
+```

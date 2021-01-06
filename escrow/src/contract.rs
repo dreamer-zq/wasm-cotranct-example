@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    to_binary, Api, BankMsg, Binary, CosmosMsg, Env, Extern, HandleResponse, HumanAddr,
-    InitResponse, MessageInfo, Querier, StdResult, Storage,
+    to_binary, Api, BankMsg, Binary, CosmosMsg, Env, Extern, HandleResponse, InitResponse,
+    MessageInfo, Querier, StdResult, Storage,
 };
 
 use crate::error::ContractError;
@@ -9,7 +9,7 @@ use crate::msg::{
     OrderListResponse, QueryMsg,
 };
 use crate::state::{config, config_read, Order, OrderState, State};
-use cosmwasm_std::Coin;
+use cosmwasm_std::{has_coins, Coin};
 
 // Note, you can use StdResult in some functions where you do not
 // make use of the custom errors
@@ -19,7 +19,10 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
     _info: MessageInfo,
     _msg: InitMsg,
 ) -> StdResult<InitResponse> {
-    let state = State { orders: Vec::new() };
+    let state = State {
+        orders: Vec::new(),
+        sequence: 1,
+    };
     config(&mut deps.storage).save(&state)?;
 
     Ok(InitResponse::default())
@@ -37,11 +40,11 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
             denom,
             nft_id,
             name,
-            url,
+            uri,
             data,
             price,
-        } => place_order(deps, env, info, denom, nft_id, name, url, data, price),
-        HandleMsg::PayOrder { order_id } => pay_order(deps, env, info, order_id),
+        } => place_order(deps, env, info, denom, nft_id, name, uri, data, price),
+        HandleMsg::PayOrder { order_no } => pay_order(deps, env, info, order_no),
     }
 }
 
@@ -52,35 +55,40 @@ pub fn place_order<S: Storage, A: Api, Q: Querier>(
     denom: String,
     nft_id: String,
     name: String,
-    url: String,
+    uri: String,
     data: String,
     price: Coin,
 ) -> Result<HandleResponse<MsgWrapper>, ContractError> {
     let mut msgs: Vec<CosmosMsg<MsgWrapper>> = Vec::new();
 
     config(&mut deps.storage).update(|mut state| -> Result<_, ContractError> {
-        state.orders.push(create_order(
-            denom.clone(),
-            nft_id.clone(),
+        state.orders.push(Order {
+            no: state.sequence.to_string(),
+            denom: denom.clone(),
+            nft_id: nft_id.clone(),
             price,
-            info.sender,
-        ));
+            seller: info.sender,
+            buyer: Default::default(),
+            state: OrderState::PENDING,
+        });
 
         let msg = MsgMintNFT {
-            id: nft_id,
-            denom_id: denom,
+            id: nft_id.clone(),
+            denom_id: denom.clone(),
             name,
-            url,
+            uri,
             data,
-            sender: env.contract.address,
+            sender: env.contract.address.clone(),
+            recipient: env.contract.address,
         };
 
-        let cus = create_wasm_custom_msg(
+        let data = create_wasm_custom_msg(
             String::from("/irismod.nft.MsgMintNFT"),
             to_binary(&msg).unwrap(),
         );
-        msgs.push(cus);
+        msgs.push(data);
 
+        state.sequence = state.sequence + 1;
         Ok(state)
     })?;
 
@@ -96,18 +104,28 @@ pub fn pay_order<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
     info: MessageInfo,
-    order_id: String,
+    order_no: String,
 ) -> Result<HandleResponse<MsgWrapper>, ContractError> {
+    if info.sent_funds.len() == 0 {
+        return Err(ContractError::InvalidRequest { order_id: order_no });
+    }
+
     let mut msgs: Vec<CosmosMsg<MsgWrapper>> = Vec::new();
     config(&mut deps.storage).update(|mut state| -> Result<_, ContractError> {
         for order in &mut state.orders {
-            if order.id == order_id {
+            if order.no == order_no {
                 if order.state != OrderState::PENDING {
                     return Err(ContractError::InvalidOrderState {
-                        order_id: order.id.clone(),
+                        order_id: order.no.clone(),
                     });
                 }
+
+                if !has_coins(&info.sent_funds, &order.price) {
+                    return Err(ContractError::InvalidRequest { order_id: order_no });
+                }
+
                 order.state = OrderState::PAID;
+                order.buyer = info.sender.clone();
 
                 msgs.push(CosmosMsg::Bank(BankMsg::Send {
                     from_address: env.contract.address.clone(),
@@ -122,11 +140,11 @@ pub fn pay_order<S: Storage, A: Api, Q: Querier>(
                     recipient: info.sender,
                 };
 
-                let cus = create_wasm_custom_msg(
+                let data = create_wasm_custom_msg(
                     String::from("/irismod.nft.MsgTransferNFT"),
                     to_binary(&msg).unwrap(),
                 );
-                msgs.push(cus);
+                msgs.push(data);
                 break;
             }
         }
@@ -159,18 +177,6 @@ fn query_order_list<S: Storage, A: Api, Q: Querier>(
     Ok(OrderListResponse { list: state.orders })
 }
 
-fn create_order(denom: String, nft_id: String, price: Coin, seller: HumanAddr) -> Order {
-    let order_id = time::precise_time_ns().to_string();
-    return Order {
-        id: order_id,
-        denom,
-        nft_id,
-        price,
-        seller,
-        state: OrderState::PENDING,
-    };
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -190,19 +196,19 @@ mod tests {
     }
 
     #[test]
-    fn create_order() {
+    fn place_order() {
         let mut deps = mock_dependencies(&coins(2, "token"));
         let msg = InitMsg {};
-        let info = mock_info("creator", &coins(2, "token"));
+        let info = mock_info("creator", &coins(2, "iris"));
         let _res = init(&mut deps, mock_env(), info, msg).unwrap();
 
         // beneficiary can release it
-        let info = mock_info("voter1", &coins(2, "token"));
+        let info = mock_info("voter1", &coins(2, "iris"));
         let msg = HandleMsg::CreateOrder {
             denom: "cert".to_string(),
             nft_id: "id1".to_string(),
             name: "test".to_string(),
-            url: "test".to_string(),
+            uri: "test".to_string(),
             data: "test".to_string(),
             price: Coin::new(100u128, "iris"),
         };
@@ -212,5 +218,21 @@ mod tests {
         let res = query(&deps, mock_env(), QueryMsg::GetOrderList {}).unwrap();
         let value: OrderListResponse = from_binary(&res).unwrap();
         assert_eq!(1, value.list.len());
+
+        let msg = HandleMsg::PayOrder {
+            order_no: "1".to_string(),
+        };
+
+        // beneficiary can release it
+        let info = mock_info("voter2", &coins(100, "iris"));
+        let _res = handle(&mut deps, mock_env(), info, msg).unwrap();
+
+        // should increase counter by 1
+        let res = query(&deps, mock_env(), QueryMsg::GetOrderList {}).unwrap();
+        let value: OrderListResponse = from_binary(&res).unwrap();
+        assert_eq!(1, value.list.len());
+
+        let order = value.list.get(0).unwrap();
+        assert_eq!(OrderState::PAID, order.state);
     }
 }

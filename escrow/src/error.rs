@@ -14,6 +14,9 @@ pub enum ContractError {
 
     #[error("({order_id}) Order state invalid")]
     InvalidOrderState { order_id: String },
+
+    #[error("You should be paid for ({order_id}) order")]
+    InvalidRequest { order_id: String },
     // Add any other custom errors you like here.
     // Look at https://docs.rs/thiserror/1.0.21/thiserror/ for details.
 }
