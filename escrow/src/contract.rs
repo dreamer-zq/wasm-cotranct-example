@@ -36,7 +36,7 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
     msg: HandleMsg,
 ) -> Result<HandleResponse<MsgWrapper>, ContractError> {
     match msg {
-        HandleMsg::CreateOrder {
+        HandleMsg::Create {
             denom,
             nft_id,
             name,
@@ -44,7 +44,13 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
             data,
             price,
         } => place_order(deps, env, info, denom, nft_id, name, uri, data, price),
-        HandleMsg::PayOrder { order_no } => pay_order(deps, env, info, order_no),
+        HandleMsg::Delegated {
+            denom,
+            nft_id,
+            price,
+        } => delegated_order(deps, env, info, denom, nft_id, price),
+        HandleMsg::Pay { order_no } => pay_order(deps, env, info, order_no),
+        HandleMsg::Cancel { order_no } => cancel_order(deps, env, info, order_no),
     }
 }
 
@@ -100,6 +106,69 @@ pub fn place_order<S: Storage, A: Api, Q: Querier>(
     Ok(r)
 }
 
+pub fn delegated_order<S: Storage, A: Api, Q: Querier>(
+    _deps: &mut Extern<S, A, Q>,
+    _env: Env,
+    _info: MessageInfo,
+    _denom: String,
+    _nft_id: String,
+    _price: Coin,
+) -> Result<HandleResponse<MsgWrapper>, ContractError> {
+    //TODO
+    Ok(HandleResponse::default())
+}
+
+pub fn cancel_order<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
+    env: Env,
+    info: MessageInfo,
+    order_no: String,
+) -> Result<HandleResponse<MsgWrapper>, ContractError> {
+    let mut msgs: Vec<CosmosMsg<MsgWrapper>> = Vec::new();
+    config(&mut deps.storage).update(|mut state| -> Result<_, ContractError> {
+        for order in &mut state.orders {
+            if order.no == order_no {
+                if order.state != OrderState::PENDING {
+                    return Err(ContractError::InvalidOrderState {
+                        order_id: order.no.clone(),
+                    });
+                }
+
+                if order.seller != info.sender {
+                    return Err(ContractError::InvalidOrderState {
+                        order_id: order.no.clone(),
+                    });
+                }
+
+                order.state = OrderState::REVOKE;
+
+                let msg = MsgTransferNFT {
+                    id: order.nft_id.clone(),
+                    denom_id: order.denom.clone(),
+                    name: "[do-not-modify]".to_string(),
+                    data: "[do-not-modify]".to_string(),
+                    uri: "[do-not-modify]".to_string(),
+                    sender: env.contract.address.clone(),
+                    recipient: info.sender.clone(),
+                };
+
+                let data = create_wasm_custom_msg(
+                    String::from("/irismod.nft.MsgTransferNFT"),
+                    to_binary(&msg).unwrap(),
+                );
+                msgs.push(data);
+            }
+        }
+        Ok(state)
+    })?;
+    let r = HandleResponse {
+        messages: msgs,
+        data: None,
+        attributes: vec![],
+    };
+    Ok(r)
+}
+
 pub fn pay_order<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
@@ -136,6 +205,9 @@ pub fn pay_order<S: Storage, A: Api, Q: Querier>(
                 let msg = MsgTransferNFT {
                     id: order.nft_id.clone(),
                     denom_id: order.denom.clone(),
+                    name: "[do-not-modify]".to_string(),
+                    data: "[do-not-modify]".to_string(),
+                    uri: "[do-not-modify]".to_string(),
                     sender: env.contract.address,
                     recipient: info.sender,
                 };
@@ -204,7 +276,7 @@ mod tests {
 
         // beneficiary can release it
         let info = mock_info("voter1", &coins(2, "iris"));
-        let msg = HandleMsg::CreateOrder {
+        let msg = HandleMsg::Create {
             denom: "cert".to_string(),
             nft_id: "id1".to_string(),
             name: "test".to_string(),
@@ -219,7 +291,7 @@ mod tests {
         let value: OrderListResponse = from_binary(&res).unwrap();
         assert_eq!(1, value.list.len());
 
-        let msg = HandleMsg::PayOrder {
+        let msg = HandleMsg::Pay {
             order_no: "1".to_string(),
         };
 

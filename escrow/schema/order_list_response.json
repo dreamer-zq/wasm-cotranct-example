@@ -71,7 +71,8 @@
       "type": "string",
       "enum": [
         "PENDING",
-        "PAID"
+        "PAID",
+        "REVOKE"
       ]
     },
     "Uint128": {

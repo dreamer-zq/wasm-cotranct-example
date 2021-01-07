@@ -5,10 +5,10 @@
     {
       "type": "object",
       "required": [
-        "create_order"
+        "create"
       ],
       "properties": {
-        "create_order": {
+        "create": {
           "type": "object",
           "required": [
             "data",
@@ -44,10 +44,56 @@
     {
       "type": "object",
       "required": [
-        "pay_order"
+        "delegated"
       ],
       "properties": {
-        "pay_order": {
+        "delegated": {
+          "type": "object",
+          "required": [
+            "denom",
+            "nft_id",
+            "price"
+          ],
+          "properties": {
+            "denom": {
+              "type": "string"
+            },
+            "nft_id": {
+              "type": "string"
+            },
+            "price": {
+              "$ref": "#/definitions/Coin"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "pay"
+      ],
+      "properties": {
+        "pay": {
+          "type": "object",
+          "required": [
+            "order_no"
+          ],
+          "properties": {
+            "order_no": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "cancel"
+      ],
+      "properties": {
+        "cancel": {
           "type": "object",
           "required": [
             "order_no"

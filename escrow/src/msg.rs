@@ -12,7 +12,7 @@ pub struct InitMsg {}
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum HandleMsg {
-    CreateOrder {
+    Create {
         denom: String,
         nft_id: String,
         price: Coin,
@@ -20,7 +20,15 @@ pub enum HandleMsg {
         uri: String,
         data: String,
     },
-    PayOrder {
+    Delegated {
+        denom: String,
+        nft_id: String,
+        price: Coin,
+    },
+    Pay {
+        order_no: String,
+    },
+    Cancel {
         order_no: String,
     },
 }
@@ -55,6 +63,9 @@ pub struct MsgMintNFT {
 pub struct MsgTransferNFT {
     pub id: String,
     pub denom_id: String,
+    pub name: String,
+    pub uri: String,
+    pub data: String,
     pub sender: HumanAddr,
     pub recipient: HumanAddr,
 }
