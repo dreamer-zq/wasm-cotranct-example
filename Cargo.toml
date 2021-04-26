@@ -4,4 +4,5 @@ members = [
   "escrow",
   "collector",
   "register",
+  "lifecycle-manage",
 ]
