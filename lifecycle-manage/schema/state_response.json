@@ -1,17 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "State",
+  "title": "StateResponse",
   "type": "object",
   "required": [
-    "frozen",
-    "owner"
+    "state"
   ],
   "properties": {
-    "frozen": {
-      "type": "boolean"
-    },
-    "owner": {
-      "$ref": "#/definitions/CanonicalAddr"
+    "state": {
+      "$ref": "#/definitions/State"
     }
   },
   "definitions": {
@@ -21,6 +17,21 @@
     },
     "CanonicalAddr": {
       "$ref": "#/definitions/Binary"
+    },
+    "State": {
+      "type": "object",
+      "required": [
+        "frozen",
+        "owner"
+      ],
+      "properties": {
+        "frozen": {
+          "type": "boolean"
+        },
+        "owner": {
+          "$ref": "#/definitions/CanonicalAddr"
+        }
+      }
     }
   }
 }
