@@ -8,16 +8,8 @@ pub static CONFIG_KEY: &[u8] = b"config";
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct State {
-    pub status: Status,
+    pub frozen: bool,
     pub owner: CanonicalAddr,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum Status {
-    Normal,
-    Frozen,
-    Destroyed,
 }
 
 impl State {
@@ -27,7 +19,7 @@ impl State {
     }
 
     pub fn can_modify(&self, addr: CanonicalAddr) -> bool {
-        self.is_owner(addr) && self.status == Status::Normal
+        self.is_owner(addr) && !self.frozen
     }
 }
 

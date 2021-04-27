@@ -1,11 +1,11 @@
 use cosmwasm_std::{
     to_binary, Binary, CanonicalAddr, Deps, DepsMut, Env, HandleResponse, InitResponse,
-    MessageInfo, Order, StdError, StdResult,
+    MessageInfo, Order, StdResult,
 };
 
 use crate::error::ContractError;
 use crate::msg::{HandleMsg, InitMsg, QueryMsg, StateResponse};
-use crate::state::{config, config_read, State, Status};
+use crate::state::{config, config_read, State};
 
 // Note, you can use StdResult in some functions where you do not
 // make use of the custom errors
@@ -16,7 +16,7 @@ pub fn init(
     _: InitMsg,
 ) -> Result<InitResponse, ContractError> {
     let state = State {
-        status: Status::Normal,
+        frozen: false,
         owner: deps.api.canonical_address(&info.sender)?,
     };
     config(deps.storage).save(&state)?;
@@ -43,7 +43,7 @@ pub fn freeze(deps: DepsMut, addr: CanonicalAddr) -> Result<HandleResponse, Cont
         if !state.can_modify(addr) {
             return Err(ContractError::Unauthorized {});
         }
-        state.status = Status::Frozen;
+        state.frozen = true;
         Ok(state)
     })?;
 
@@ -56,10 +56,10 @@ pub fn unfreeze(deps: DepsMut, addr: CanonicalAddr) -> Result<HandleResponse, Co
             return Err(ContractError::Unauthorized {});
         }
 
-        if state.status != Status::Frozen {
+        if !state.frozen {
             return Err(ContractError::InvalidOperate {});
         }
-        state.status = Status::Normal;
+        state.frozen = false;
         Ok(state)
     })?;
     Ok(HandleResponse::default())
@@ -91,15 +91,14 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 
 fn query_state(deps: Deps) -> StdResult<StateResponse> {
     let state = config_read(deps.storage).load()?;
-    Ok(StateResponse { state: state })
+    Ok(StateResponse { state })
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::state::Status;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::{coins, from_binary};
+    use cosmwasm_std::{coins, from_binary, StdError};
 
     #[test]
     fn proper_initialization() {
@@ -115,7 +114,7 @@ mod tests {
         // it worked, let's query the state
         let res = query(deps.as_ref(), mock_env(), QueryMsg::GetState {}).unwrap();
         let value: StateResponse = from_binary(&res).unwrap();
-        assert_eq!(Status::Normal, value.state.status);
+        assert_eq!(false, value.state.frozen);
     }
 
     #[test]
@@ -134,7 +133,7 @@ mod tests {
         // should increase counter by 1
         let res = query(deps.as_ref(), mock_env(), QueryMsg::GetState {}).unwrap();
         let value: StateResponse = from_binary(&res).unwrap();
-        assert_eq!(Status::Frozen, value.state.status);
+        assert_eq!(true, value.state.frozen);
     }
 
     #[test]
@@ -158,7 +157,7 @@ mod tests {
         // should now be Normal
         let res = query(deps.as_ref(), mock_env(), QueryMsg::GetState {}).unwrap();
         let value: StateResponse = from_binary(&res).unwrap();
-        assert_eq!(Status::Normal, value.state.status);
+        assert_eq!(false, value.state.frozen);
     }
 
     #[test]
