@@ -89,6 +89,10 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     }
 }
 
+pub fn can_modify(deps: Deps, addr: CanonicalAddr) -> bool {
+    query_state(deps).unwrap().state.can_modify(addr)
+}
+
 fn query_state(deps: Deps) -> StdResult<StateResponse> {
     let state = config_read(deps.storage).load()?;
     Ok(StateResponse { state })

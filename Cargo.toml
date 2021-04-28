@@ -5,4 +5,5 @@ members = [
   "collector",
   "register",
   "lifecycle-manage",
+  "lifecycle-manage-example",
 ]
