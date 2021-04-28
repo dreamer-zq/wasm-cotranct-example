@@ -32,6 +32,39 @@
           }
         }
       }
+    },
+    {
+      "type": "object",
+      "required": [
+        "freeze"
+      ],
+      "properties": {
+        "freeze": {
+          "type": "object"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "unfreeze"
+      ],
+      "properties": {
+        "unfreeze": {
+          "type": "object"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "destroy"
+      ],
+      "properties": {
+        "destroy": {
+          "type": "object"
+        }
+      }
     }
   ]
 }

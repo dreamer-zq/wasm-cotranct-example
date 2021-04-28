@@ -33,7 +33,7 @@ backtraces = ["cosmwasm-std/backtraces"]
 [dependencies]
 cosmwasm-std = {version = "0.13.2"}
 cosmwasm-storage = {version = "0.13.2"}
-lifecycle-manage = {path = "../lifecycle-manage"}
+lifecycle = {path = "../lifecycle-manage"}
 schemars = "0.7"
 serde = {version = "1.0.103", default-features = false, features = ["derive"]}
 thiserror = {version = "1.0.23"}

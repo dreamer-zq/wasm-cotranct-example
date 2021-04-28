@@ -3,10 +3,8 @@ use cosmwasm_std::{
     MessageInfo, StdResult,
 };
 
-use lifecycle_manage::{
-    contract::{can_modify, destroy, freeze, init as lc_instantiate, unfreeze},
-    error::ContractError as lc_Error,
-    msg::InitMsg as lc_InitMsg,
+use lifecycle::helper::{
+    can_modify, destroy, freeze, init as lc_instantiate, query_state, unfreeze,
 };
 
 use crate::error::ContractError;
@@ -17,14 +15,14 @@ use crate::state::{config, config_read, State};
 // make use of the custom errors
 pub fn init(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     info: MessageInfo,
     msg: InitMsg,
 ) -> Result<InitResponse, ContractError> {
     let state = State { count: msg.count };
     config(deps.storage).save(&state)?;
 
-    Ok(lc_instantiate(deps, env, info, lc_InitMsg {}).unwrap())
+    Ok(lc_instantiate(deps, info).unwrap())
 }
 
 // And declare a custom Error variant for the ones where you will want to make use of it
@@ -98,6 +96,7 @@ pub fn try_destroy(deps: DepsMut, addr: CanonicalAddr) -> Result<HandleResponse,
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::GetCount {} => to_binary(&query_count(deps)?),
+        QueryMsg::GetState {} => to_binary(&query_state(deps)?),
     }
 }
 
