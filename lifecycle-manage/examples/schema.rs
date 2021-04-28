@@ -3,8 +3,8 @@ use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
-use lifecycle_manage::msg::{StateResponse, HandleMsg, InitMsg, QueryMsg};
-use lifecycle_manage::state::State;
+use lifecycle::msg::{HandleMsg, InitMsg, QueryMsg, StateResponse};
+use lifecycle::state::State;
 
 fn main() {
     let mut out_dir = current_dir().unwrap();
