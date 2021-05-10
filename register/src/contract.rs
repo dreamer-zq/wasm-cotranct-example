@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    to_binary, Api, Binary, CosmosMsg, Empty, Env, Extern, HandleResponse, HumanAddr, InitResponse,
-    MessageInfo, Querier, StdResult, Storage, WasmMsg,
+    to_binary, Api, Binary, CosmosMsg, DepsMut, Empty, Env, HandleResponse, HumanAddr,
+    InitResponse, MessageInfo, Querier, StdResult, Storage, WasmMsg,
 };
 
 use crate::error::ContractError;
@@ -9,21 +9,21 @@ use crate::state::{config, State};
 
 // Note, you can use StdResult in some functions where you do not
 // make use of the custom errors
-pub fn init<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Extern<S, A, Q>,
+pub fn init(
+    deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
     _msg: InitMsg,
-) -> StdResult<InitResponse> {
+) -> Result<InitResponse, ContractError> {
     let state = State {};
-    config(&mut deps.storage).save(&state)?;
+    config(deps.storage).save(&state)?;
 
     Ok(InitResponse::default())
 }
 
 // And declare a custom Error variant for the ones where you will want to make use of it
-pub fn handle<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Extern<S, A, Q>,
+pub fn handle(
+    deps: DepsMut,
     env: Env,
     _info: MessageInfo,
     msg: HandleMsg,
@@ -33,8 +33,8 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
     }
 }
 
-pub fn try_register<S: Storage, A: Api, Q: Querier>(
-    _deps: &mut Extern<S, A, Q>,
+pub fn try_register(
+    _deps: DepsMut,
     _env: Env,
     collector: HumanAddr,
 ) -> Result<HandleResponse, ContractError> {
@@ -52,7 +52,7 @@ pub fn try_register<S: Storage, A: Api, Q: Querier>(
 }
 
 pub fn query<S: Storage, A: Api, Q: Querier>(
-    _deps: &Extern<S, A, Q>,
+    _deps: DepsMut,
     _env: Env,
     _msg: QueryMsg,
 ) -> StdResult<Binary> {
@@ -74,14 +74,14 @@ mod tests {
         let info = mock_info("creator", &coins(1000, "earth"));
 
         // we can just call .unwrap() to assert this was a success
-        let res = init(&mut deps, mock_env(), info, msg).unwrap();
+        let res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         let info = mock_info("anyone", &coins(2, "token"));
         let msg = HandleMsg::Register {
             collector: HumanAddr::from("collector"),
         };
-        let res = handle(&mut deps, mock_env(), info, msg).unwrap();
+        let res = handle(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(1, res.messages.len());
 
         let msg = to_binary(&ProxyCall { call: Empty {} }).unwrap();

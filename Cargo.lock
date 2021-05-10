@@ -57,9 +57,9 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 name = "collector"
 version = "0.1.0"
 dependencies = [
- "cosmwasm-schema 0.11.2",
- "cosmwasm-std 0.11.2",
- "cosmwasm-storage 0.11.2",
+ "cosmwasm-schema 0.13.2",
+ "cosmwasm-std 0.13.2",
+ "cosmwasm-storage 0.13.2",
  "schemars",
  "serde",
  "thiserror",
@@ -240,9 +240,9 @@ dependencies = [
 name = "register"
 version = "0.1.0"
 dependencies = [
- "cosmwasm-schema 0.11.2",
- "cosmwasm-std 0.11.2",
- "cosmwasm-storage 0.11.2",
+ "cosmwasm-schema 0.13.2",
+ "cosmwasm-std 0.13.2",
+ "cosmwasm-storage 0.13.2",
  "schemars",
  "serde",
  "thiserror",
