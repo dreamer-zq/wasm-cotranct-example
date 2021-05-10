@@ -1,10 +1,10 @@
 use cosmwasm_std::{
-    to_binary, Api, Binary, CosmosMsg, DepsMut, Empty, Env, HandleResponse, HumanAddr,
-    InitResponse, MessageInfo, Querier, StdResult, Storage, WasmMsg,
+    to_binary, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, HandleResponse, HumanAddr,
+    InitResponse, MessageInfo, StdResult, WasmMsg,
 };
 
 use crate::error::ContractError;
-use crate::msg::{HandleMsg, InitMsg, ProxyCall, QueryMsg};
+use crate::msg::{CountResponse, HandleMsg, InitMsg, ProxyCall, QueryMsg};
 use crate::state::{config, State};
 
 // Note, you can use StdResult in some functions where you do not
@@ -51,12 +51,12 @@ pub fn try_register(
     })
 }
 
-pub fn query<S: Storage, A: Api, Q: Querier>(
-    _deps: DepsMut,
-    _env: Env,
-    _msg: QueryMsg,
-) -> StdResult<Binary> {
-    match _msg {}
+pub fn query(deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<Binary> {
+    to_binary(&query_count(deps)?)
+}
+
+fn query_count(_deps: Deps) -> StdResult<CountResponse> {
+    Ok(CountResponse {})
 }
 
 #[cfg(test)]
