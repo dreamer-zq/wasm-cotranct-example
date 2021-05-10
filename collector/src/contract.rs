@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    to_binary, Binary, DepsMut, Env, HandleResponse, InitResponse, MessageInfo, StdResult,
+    to_binary, Binary, Deps, DepsMut, Env, HandleResponse, InitResponse, MessageInfo, StdResult,
 };
 
 use crate::error::ContractError;
@@ -45,13 +45,13 @@ pub fn try_call(deps: DepsMut, info: MessageInfo) -> Result<HandleResponse, Cont
     Ok(HandleResponse::default())
 }
 
-pub fn query(deps: DepsMut, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::GetCallers {} => to_binary(&query_count(deps)?),
     }
 }
 
-fn query_count(deps: DepsMut) -> StdResult<QueryCallersResponse> {
+fn query_count(deps: Deps) -> StdResult<QueryCallersResponse> {
     let state = config_read(deps.storage).load()?;
     Ok(QueryCallersResponse {
         callers: state.callers,
@@ -68,7 +68,7 @@ mod tests {
     fn proper_initialization() {
         let mut deps = mock_dependencies(&[]);
 
-        let msg = InitMsg { count: 17 };
+        let msg = InitMsg {};
         let info = mock_info("creator", &coins(1000, "earth"));
 
         // we can just call .unwrap() to assert this was a success
@@ -80,7 +80,7 @@ mod tests {
     fn call() {
         let mut deps = mock_dependencies(&coins(2, "token"));
 
-        let msg = InitMsg { count: 17 };
+        let msg = InitMsg {};
         let info = mock_info("creator", &coins(2, "token"));
         let _res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
 
@@ -90,7 +90,7 @@ mod tests {
         let _res = handle(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         // should increase counter by 1
-        let res = query(deps.as_mut(), mock_env(), QueryMsg::GetCallers {}).unwrap();
+        let res = query(deps.as_ref(), mock_env(), QueryMsg::GetCallers {}).unwrap();
         let value: QueryCallersResponse = from_binary(&res).unwrap();
         assert_eq!(1, value.callers.len());
     }
