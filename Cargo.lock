@@ -66,6 +66,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "collector-v2"
+version = "0.2.0"
+dependencies = [
+ "cosmwasm-schema 0.13.2",
+ "cosmwasm-std 0.13.2",
+ "cosmwasm-storage 0.13.2",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "cosmwasm-derive"
 version = "0.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"

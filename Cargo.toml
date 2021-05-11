@@ -3,6 +3,7 @@
 members = [
   "escrow",
   "collector",
+  "collector-v2",
   "register",
   "lifecycle-manage",
   "lifecycle-manage-example",

@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "State",
+  "type": "object",
+  "required": [
+    "callers"
+  ],
+  "properties": {
+    "callers": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/HumanAddr"
+      }
+    }
+  },
+  "definitions": {
+    "HumanAddr": {
+      "type": "string"
+    }
+  }
+}
